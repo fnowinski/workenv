@@ -1,0 +1,8 @@
+*~
+.DS_Store
+yarn-error.log
+tags
+NOTES.md
+.bundle/
+.gitignore_global
+.ruby-version
