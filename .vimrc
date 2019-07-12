@@ -108,6 +108,8 @@ set ttimeoutlen=1
 set relativenumber
 set path=$PWD/**
 
+silent !<command>
+
 " Exclude included files with vim autocomplete
 set complete-=i
 
@@ -147,6 +149,8 @@ imap dgr debugger
 nmap dgr yiwodgr
 imap iee IEx.pry
 nmap iee yiwoiee
+imap ppb <%= binding.pry %>
+nmap ppb ywippb
 
 " Deleting
 nnoremap <leader>d "_d

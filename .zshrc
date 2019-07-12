@@ -1,5 +1,7 @@
 export ZSH=/Users/frank/.oh-my-zsh
 export PATH="$HOME/.rbenv/bin:$PATH"
+export PATH=".git/safe/../../bin:$PATH"
+
 eval "$(rbenv init -)"
 
 # Source files
@@ -87,20 +89,29 @@ alias scon='docker-compose exec social-web bundle exec rails console'
 alias drspec='docker-compose exec test bundle exec rspec'
 alias dspec='docker-compose exec test bundle exec spring rspec'
 alias docker_stop='docker-compose down'
-alias docker_destroy='docker rmi -f `docker images -q -a`' #run docker down before
+alias docker_destroy='docker rmi -f `docker images -q -a`'
 alias brew_start="brew services start mariadb; brew services start postgresql; brew services start redis; sudo brew services start nginx"
 alias brew_stop="brew services stop mariadb; brew services stop postgresql; brew services stop redis; sudo brew services stop nginx"
 alias dload_test="docker-compose exec test rake db:load"
 
 alias rcon='be rails c'
 alias rstart='be rails s'
+alias rspec='be rspec'
 alias Z='fg'
-alias rup1='git co rails_upgrade_4_1 && git pull origin rails_upgrade_4_1'
 alias rup0='git co rails_upgrade && git pull origin rails_upgrade'
+alias rup1='git co rails_upgrade_4_1 && git pull origin rails_upgrade_4_1'
+alias rup2='git co rails_4_2 && git pull origin rails_4_2'
+alias gstash='git stash save'
+alias glist='git stash list'
+alias gpop='git stash pop'
 
 # Terminate open port
 Terminate () {
   lsof -i TCP:$1 | grep --color=auto --exclude-dir={.bzr,CVS,.git,.hg,.svn} IPv4 | awk '{print $2}' | xargs kill -9
+}
+
+scratch () {
+  vim scratch.rb
 }
 
 # Start Docker - tc-www
@@ -229,7 +240,34 @@ regex () {
   gawk 'match($0,/'$1'/, ary) {print ary['${2:-'0'}']}'
 }
 
+get_aws_server () {
+  filter="Name=tag:Name,Values=ECS Instance - EC2ContainerService-tc-www-staging-"$1
+  aws ec2 describe-instances --filter $filter | jq '.Reservations[0].Instances[0].NetworkInterfaces[0].PrivateIpAddresses[0].Association.PublicDnsName' | sed 's/\"//g'
+}
+
+ssh_qa () {
+  ssh -i ~/.ssh/tunecore1.pem ec2-user@$(get_aws_server "qa"$1)
+}
+
+ssh_dev () {
+  ssh -i ~/.ssh/tunecore1.pem ec2-user@$(get_aws_server "dev"$1)
+}
+
+find () {
+  grep -riIl $1 . --exclude="./cache/*"
+}
+
+get_ticket () {
+  [ ! -d .git ] && echo "ERROR: This isnt a git directory" && return
+
+  curr_branch=$(git branch | grep '\*' | cut -d ' ' -f2-)
+  ticket_id=`echo ${curr_branch%/*} | tr 'a-z' 'A-Z'`
+
+  ticket_id
+}
+
 source $ZSH/oh-my-zsh.sh
 source $HOME/.zshenv
 eval "$(direnv hook zsh)"
 export PATH="/usr/local/sbin:$PATH"
+#export PATH="/usr/local/opt/mariadb@10.1/bin:$PATH"
