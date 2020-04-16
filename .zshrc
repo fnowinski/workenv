@@ -4,6 +4,8 @@ export PATH=".git/safe/../../bin:$PATH"
 
 eval "$(rbenv init -)"
 
+#export TERM=xterm
+
 # Source files
 for file in ~/.tunecorerc; do
   source "$file"
@@ -44,66 +46,55 @@ alias aliases='vim ~/.bash_profile'
 # Directories
 alias dub='cd /Users/frank/Projects/tc-www'
 alias react='cd /Users/frank/Projects/tc-www/app/javascript_apps/'
-alias social='cd /Users/frank/Projects/tc-social'
-alias stats='cd /Users/frank/Projects/stats'
-alias petri='cd /Users/frank/Projects/petri'
-alias sip='cd /Users/frank/Projects/Sip'
-alias tunecore='cd /Users/frank/Projects/tunecore/'
-alias blog='cd /Users/frank/Projects/blog/'
 
 # Git
 alias master='git co master && git pull origin master && git fetch'
 alias amend='git commit --amend --no-edit'
 alias push='git push -f origin HEAD'
-alias gdm="git diff master...$(git name-rev --name-only HEAD)"
 alias gst="git status"
 alias diff="git diff"
 alias gco="git co"
 alias gadd="git add ."
 alias gcont="git rebase --continue"
 alias gpush="git push origin head"
+alias gpull="git pull origin --rebase"
 alias grebase="git rebase -i origin/master"
 
 # Commands
 alias c="clear"
 alias @='where am i'
 alias be='bundle exec'
-alias pryr="prybaby -r"
 alias tkill="killall tmux"
 alias tnew="tmux new -s "
+alias tdev="tmux a -t dev"
 alias secrets='./docker/pull_secrets.sh'
-
 alias ors='lsof -wni tcp:3000'
-alias osp='ps -ef | grep spring'
 alias kill_spring='ps aux | grep spring | grep -v "grep" | awk "{print $2}" | xargs kill'
-alias ngr='sudo pkill nginx;sudo nginx'
 alias tags="ctags -R --exclude=node_modules --exclude=public --exclude=vendor --exclude=db --exclude=tmp"
-alias kside="ps -ef | grep sidekiq | grep -v grep | awk '{print $2}' | xargs kill - -ef | grep sidekiq | grep -v grep | awk '{print $2}' | xargs kill -9"
-alias call="caller.select { |x| x.include?('/tc-www/app')  }"
+
+alias rc='be rails c'
+alias rs='be rails s'
+alias rsd='be sidekiq'
+alias rspec='be rspec'
+alias gstash='git stash save'
+alias glist='git stash list'
+alias gpop='git stash pop'
+alias lss="ls -ltr"
+alias Z='fg'
 
 # Docker
 alias docker_start='docker-sync-stack start'
 alias dcon='docker-compose exec puma bundle exec rails console'
-alias dconpro='docker-compose exec -e DATABASE_URL=$PRODB_RO puma bundle exec rails console'
-alias scon='docker-compose exec social-web bundle exec rails console'
 alias drspec='docker-compose exec test bundle exec rspec'
 alias dspec='docker-compose exec test bundle exec spring rspec'
 alias docker_stop='docker-compose down'
 alias docker_destroy='docker rmi -f `docker images -q -a`'
 alias brew_start="brew services start mariadb; brew services start postgresql; brew services start redis; sudo brew services start nginx"
 alias brew_stop="brew services stop mariadb; brew services stop postgresql; brew services stop redis; sudo brew services stop nginx"
-alias dload_test="docker-compose exec test rake db:load"
 
-alias rcon='be rails c'
-alias rstart='be rails s'
-alias rspec='be rspec'
-alias Z='fg'
-alias rup0='git co rails_upgrade && git pull origin rails_upgrade'
-alias rup1='git co rails_upgrade_4_1 && git pull origin rails_upgrade_4_1'
-alias rup2='git co rails_4_2 && git pull origin rails_4_2'
-alias gstash='git stash save'
-alias glist='git stash list'
-alias gpop='git stash pop'
+# When switching over to rails 6:
+# gem uninstall method_source -v 0.9.2
+# require 'bootsnap/setup' unless ENV["ZEUS_MASTER_FD"]
 
 # Terminate open port
 Terminate () {
@@ -114,17 +105,10 @@ scratch () {
   vim scratch.rb
 }
 
-# Start Docker - tc-www
 dstart() {
   docker_stop;
   docker-sync clean;
   docker_start;
-}
-
-# Start Docker - tc-social
-sstart() {
-  docker-compose down;
-  docker-compose up;
 }
 
 # Rebuild Docker Containers
@@ -134,17 +118,8 @@ docker_refresh() {
   docker_start;
 }
 
-dtail() {
-  docker-compose exec $1 tail -f log/$1.log
-}
-
 dpry () {
   web_pid=$(docker ps | grep tc-www_puma | awk '{print $1}')
-  docker attach $web_pid
-}
-
-spry () {
-  web_pid=$(docker ps | grep social-web | awk '{print $1}')
   docker attach $web_pid
 }
 
@@ -245,29 +220,42 @@ get_aws_server () {
   aws ec2 describe-instances --filter $filter | jq '.Reservations[0].Instances[0].NetworkInterfaces[0].PrivateIpAddresses[0].Association.PublicDnsName' | sed 's/\"//g'
 }
 
-ssh_qa () {
-  ssh -i ~/.ssh/tunecore1.pem ec2-user@$(get_aws_server "qa"$1)
-}
-
-ssh_dev () {
-  ssh -i ~/.ssh/tunecore1.pem ec2-user@$(get_aws_server "dev"$1)
-}
-
 find () {
   grep -riIl $1 . --exclude="./cache/*"
 }
 
-get_ticket () {
-  [ ! -d .git ] && echo "ERROR: This isnt a git directory" && return
-
-  curr_branch=$(git branch | grep '\*' | cut -d ' ' -f2-)
-  ticket_id=`echo ${curr_branch%/*} | tr 'a-z' 'A-Z'`
-
-  ticket_id
+getip () {
+  aws ec2 describe-instances | jq -r '.Reservations[].Instances[] | select(contains({Tags: [{Key: "Name"}]})) | select(.Tags[].Value | test("tc-www-staging-'"$1"'$")) | .PublicIpAddress' | head -1
 }
 
-source $ZSH/oh-my-zsh.sh
-source $HOME/.zshenv
+getpip () {
+  aws ec2 describe-instances --filter "Name=tag:Name,Values=tc-www-"${1}"-web-asg" | jq '.Reservations[0].Instances[0].PrivateDnsName' | sed 's/\"//g'
+}
+
+tsh () {
+  servername=${1:-"dev1"}
+  serverip=$(getip "$servername")
+  if [ -z "$serverip" ] || [ "$serverip" = "null" ]; then
+    echo "Server Not Found"
+    exit 1
+  fi
+  ssh -i ~/.ssh/tunecore1.pem ec2-user@"$serverip"
+}
+
+scp_bside () {
+  scp -i ~/.ssh/tunecore1.pem $1 centos@metronome.tunecore.com:/tmp
+}
+
+scp_staging () {
+  serverip=$(getip $1)
+  scp -i ~/.ssh/tunecore1.pem $2 ec2-user@"$serverip":
+}
+
+scp_from_bside () {
+  scp -i ~/.ssh/tunecore1.pem centos@metronome.tunecore.com:/tmp/$1 ~/Downloads/
+}
+
 eval "$(direnv hook zsh)"
 export PATH="/usr/local/sbin:$PATH"
-#export PATH="/usr/local/opt/mariadb@10.1/bin:$PATH"
+source $ZSH/oh-my-zsh.sh
+source $HOME/.zshenv

@@ -4,5 +4,6 @@ yarn-error.log
 tags
 NOTES.md
 .bundle/
-.gitignore_global
 .ruby-version
+app/javascript_apps/.vimrc
+.projections.json

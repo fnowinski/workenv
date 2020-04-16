@@ -7,55 +7,54 @@ call vundle#begin()
 
 Plugin 'VundleVim/Vundle.vim'
 
-" Colors
-Plugin 'dracula/vim'
-
 " Utils
-Plugin 'scrooloose/nerdtree'
-Plugin 'scrooloose/nerdcommenter'
-Plugin 'epmatsw/ag.vim'
-Plugin 'vim-ruby/vim-ruby'
-Plugin 'tpope/vim-rails'
-Plugin 'tpope/vim-surround'
-Plugin 'tpope/vim-fugitive'
-Plugin 'tpope/vim-endwise'
-Plugin 'tpope/vim-dispatch'
-Plugin 'tpope/vim-rhubarb'
-Plugin 'tpope/vim-unimpaired'
-Plugin 'tpope/vim-sleuth'
-Plugin 'tpope/vim-ragtag'
-Plugin 'tpope/vim-bundler'
-Plugin 'janko-m/vim-test'
-Plugin 'thoughtbot/vim-rspec'
-Plugin 'majutsushi/tagbar'
-Plugin 'terryma/vim-multiple-cursors'
+Plugin 'AndrewRadev/splitjoin.vim'
+Plugin 'benmills/vimux'
 Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'christoomey/vim-tmux-runner'
 Plugin 'craigemery/vim-autotag'
-Plugin 'jiangmiao/auto-pairs'
-Plugin 'simeji/winresizer'
-Plugin 'junegunn/fzf.vim'
-Plugin 'mattn/emmet-vim'
+Plugin 'edkolev/tmuxline.vim'
 Plugin 'elixir-editors/vim-elixir'
+Plugin 'epmatsw/ag.vim'
+Plugin 'godlygeek/tabular'
+Plugin 'janko-m/vim-test'
+Plugin 'jiangmiao/auto-pairs'
+Plugin 'junegunn/vim-easy-align'
+Plugin 'leafgarland/typescript-vim'
+Plugin 'majutsushi/tagbar'
+Plugin 'mattn/emmet-vim'
+Plugin 'mxw/vim-jsx'
+Plugin 'neomake/neomake'
+Plugin 'ngmy/vim-rubocop'
+Plugin 'pangloss/vim-javascript'
+Plugin 'scrooloose/nerdcommenter'
+Plugin 'scrooloose/nerdtree'
+Plugin 'simeji/winresizer'
+Plugin 'sonph/onehalf'
+Plugin 'tasn/vim-tsx'
+Plugin 'terryma/vim-multiple-cursors'
+Plugin 'tmm1/ripper-tags'
+Plugin 'tpope/vim-bundler'
+Plugin 'tpope/vim-dispatch'
+Plugin 'tpope/vim-endwise'
+Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-projectionist'
+Plugin 'tpope/vim-ragtag'
+Plugin 'tpope/vim-rails'
+Plugin 'tpope/vim-rbenv'
+Plugin 'tpope/vim-rhubarb'
+Plugin 'tpope/vim-sleuth'
+Plugin 'tpope/vim-surround'
+Plugin 'tpope/vim-unimpaired'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-Plugin 'edkolev/tmuxline.vim'
-Plugin 'pangloss/vim-javascript'
-Plugin 'mxw/vim-jsx'
-Plugin 'godlygeek/tabular'
+Plugin 'vim-ruby/vim-ruby'
 Plugin 'vim-syntastic/syntastic'
-Plugin 'gosukiwi/vim-atom-dark'
-Plugin 'sonph/onehalf'
-Plugin 'ngmy/vim-rubocop'
+Plugin 'vimwiki/vimwiki'
 Plugin 'wincent/command-t'
-Plugin 'AndrewRadev/splitjoin.vim'
-Plugin 'junegunn/vim-easy-align'
-"
-Plugin 'tpope/vim-rbenv'
-Plugin 'tmm1/ripper-tags'
-" w0rp/ale linting for Vim
-"mkdir -p ~/.vim/pack/git-plugins/start
-"git clone https://github.com/w0rp/ale.git ~/.vim/pack/git-plugins/start/ale
+Plugin 'prettier/vim-prettier', {
+  \ 'do': 'yarn install',
+  \ 'for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html'] }
 
 call vundle#end()
 filetype plugin indent on
@@ -64,8 +63,6 @@ filetype plugin indent on
 syntax on
 set t_Co=256
 set background=dark
-"colorscheme dracula
-"colorscheme onehalfdark
 
 " Map Leader
 let mapleader = ","
@@ -75,11 +72,13 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 0
 let g:jsx_ext_required = 0
 
-let g:airline_theme='luna' " luna
+let g:airline_theme='luna'
 let &t_AB="\e[48;5;%dm"
 let &t_AF="\e[38;5;%dm"
 let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
 let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=0\x7\<Esc>\\"
+
+let g:CommandTTraverseSCM='pwd'
 
 runtime macros/matchit.vim
 
@@ -90,6 +89,7 @@ set incsearch
 set hlsearch
 set ignorecase
 set tags=tags;/
+set tags+=gems.tags
 set noswapfile
 set expandtab
 set tabstop=2
@@ -107,8 +107,7 @@ set ttimeout
 set ttimeoutlen=1
 set relativenumber
 set path=$PWD/**
-
-silent !<command>
+set exrc
 
 " Exclude included files with vim autocomplete
 set complete-=i
@@ -126,19 +125,12 @@ nnoremap <leader>1 <C-w>_<cr>
 nnoremap <leader>2 <C-w>\|<cr>
 nnoremap <leader>3 <C-w>=<cr>
 
-" Reload page
-nmap <C-a> :e!<cr>
-imap <C-a> :e!<cr>
-
 " Bash
 nmap <space>z :!
 imap <space>z :!
 
 " Find and replace in file
 nmap <space>F :%s/<c-r><c-w>//g<left><left>
-
-" Open PR in Github from Git Blame
-nmap <space>G :Gbrowse <c-r><c-w><cr>
 
 " Debuggers
 imap cll console.log();<Esc>==f(a
@@ -157,6 +149,10 @@ nnoremap <leader>d "_d
 xnoremap <leader>d "_d
 xnoremap <leader>p "_dP
 
+" Yank all
+imap ya y$
+nmap ya y$
+
 " Search directory
 nnoremap <leader>ta :ta<SPACE>
 nnoremap <leader>tb :TagbarToggle<CR>
@@ -165,7 +161,6 @@ nnoremap <leader>x :only<CR>
 cnoremap <C-a> <C-b>
 map \ :NERDTreeToggle<CR>
 map \| :NERDTreeFind<CR>
-map <leader>m :CommandTMRU<CR>
 map <leader>rt :!~/.vim/bin/update_ctags 2>/dev/null &<CR>
 map <leader>g :Gblame<CR>
 nmap <space>b <c-^>
@@ -180,6 +175,7 @@ nmap <space>f gg=G<cr>``<cr>
 nmap <leader>fh :%s/:\(\w\+\)\s*=>\s*/\1: /g<CR>
 nmap <leader>fs :%s/'/"/g<cr>
 nmap <leader>fS :%s/"/'/g<cr>
+map <leader>m :CommandTMRU<CR>
 
 " Move lines
 nnoremap <leader>vv :m .+1<CR>==
@@ -194,14 +190,13 @@ nnoremap <leader>= :wincmd =<cr>
 " Open bundler
 nmap <leader>bs :Bsplit<cr>
 
-" Open in GitHub
-nmap <leader>G :Gbrowse master:%<cr>
-
-" Open PR in Github from Git Blame
-nmap <space>G :Gbrowse <c-r><c-w><cr>
-
 " Open routes
 nmap <leader>br :e config/routes.rb<cr>
+
+" Open in GitHub
+nmap <leader>G :Gbrowse master:%<cr>
+" Open PR in Github from Git Blame
+nmap <space>G :Gbrowse <c-r><c-w><cr>
 
 " Sort
 vnoremap <leader>S :sort<cr>
@@ -260,6 +255,20 @@ function! Multiple_cursors_after()
   endif
 endfunction
 
+" Vim easy align
+" Start interactive EasyAlign in visual mode (e.g. vipga)
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)"
+
+let g:test#strategy = 'vimux'
+let test#project_root = '~/Projects/tc-www/app/javascript_apps/'
+let g:test#javascript#jest#file_pattern = '.*\.spec\.js'
+
+nmap <space>t :w<cr> :TestNearest<CR>
+nmap <space>T :w<cr> :TestFile<CR>
+nmap <space>l :w<cr> :TestLast<CR>
+nmap <space>s :w<cr> :TestSuite<CR>
+
 " Italics
 hi htmlArg gui=italic
 hi Comment gui=italic
@@ -268,20 +277,11 @@ hi htmlArg cterm=italic
 hi Comment cterm=italic
 hi Type    cterm=italic
 
-" Vim easy align
-" Start interactive EasyAlign in visual mode (e.g. vipga)
-xmap ga <Plug>(EasyAlign)
-
-" Start interactive EasyAlign for a motion/text object (e.g. gaip)
-nmap ga <Plug>(EasyAlign)"
-
-" Specs
-"let g:rspec_command = "Dispatch docker-compose exec test bundle exec spring rspec {spec}"
-let g:rspec_command = "Dispatch bundle exec spring rspec {spec}"
-nmap <space>T :w<cr>:call RunCurrentSpecFile()<CR>
-nmap <space>t :w<cr>:call RunNearestSpec()<CR>
-nmap <space>l :call RunLastSpec()<CR>
-nmap <space>A :call RunAllSpecs()<CR>
+"'nearest': '--backtrace',
+let test#ruby#rspec#options = {
+  \ 'file':    '--format documentation',
+  \ 'suite':   '--tag ~slow',
+\}
 
 set wildignore+=*/node_modules/*
 set wildignore+=*/bower_components/*"
@@ -298,6 +298,7 @@ map <leader>jw :CommandT app/workers<CR>
 map <leader>jr :CommandT app/javascript_apps/<CR>
 map <leader>je :CommandT app/services/distribution_system<CR>
 map <leader>jl :CommandT lib<CR>
+map <leader>ji :CommandT infra<CR>
 map <leader>jp :CommandT public<CR>
 map <leader>jt :CommandT spec<CR>
 map <leader>jC :CommandT config<CR>
@@ -316,6 +317,7 @@ map <leader>sw :Ag! -i <c-r>=expand("<cword>")<cr> app/workers<cr>
 map <leader>sr :Ag! -i <c-r>=expand("<cword>")<cr> app/javascript_apps/<cr>
 map <leader>se :Ag! -i <c-r>=expand("<cword>")<cr> app/services/distribution_system<cr>
 map <leader>sl :Ag! -i <c-r>=expand("<cword>")<cr> lib/<cr>
+map <leader>si :Ag! -i <c-r>=expand("<cword>")<cr> infra/<cr>
 map <leader>sp :Ag! -i <c-r>=expand("<cword>")<cr> public/<cr>
 map <leader>st :Ag! -i <c-r>=expand("<cword>")<cr> spec/<cr>
 map <leader>sC :Ag! -i <c-r>=expand("<cword>")<cr> config/<cr>
@@ -334,6 +336,7 @@ map <space>sw :Ag! -i <space>app/workers/<C-Left><Left>
 map <space>sr :Ag! -i <space>app/javascript_apps/<C-Left><Left>
 map <space>se :Ag! -i <space>app/services/distribution_system<C-Left><Left>
 map <space>sl :Ag! -i <space>lib/<C-Left><Left>
+map <space>si :Ag! -i <space>infra/<C-Left><Left>
 map <space>sp :Ag! -i <space>public/<C-Left><Left>
 map <space>st :Ag! -i <space>spec/<C-Left><Left>
 map <space>sC :Ag! -i <space>config/<C-Left><Left>
@@ -347,3 +350,5 @@ set statusline+=%*
 
 let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
+
+set secure
